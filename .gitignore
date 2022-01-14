@@ -1,0 +1,14 @@
+*.png
+*.sh
+*.jpeg
+*.gif
+.vscode
+*.C
+LOG
+*.root
+__pycache__
+h2.svg
+*.html
+RootRenderer.py
+mytty.py
+root.py
