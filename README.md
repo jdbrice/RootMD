@@ -1,7 +1,7 @@
 
 # RootMD 🩺 👩🏼‍⚕️
 
-RootMD is a markdown processor for markdown with ROOT-flavored c++ code. RootMD can execute c++ code and inject the output (from stdout, stderr) and link or embed image outputs. Provides a format for producing code + result for better documentation / notes. This is by design not a jupyter notebook, e.g. not a REPL-like environment. If you like Jupyter notebooks then use that :). 
+Scientific reports/literate programming tool for CERN ROOT and c++. RootMD is a markdown (and other format) processor for mark up with ROOT-flavored c++ code. RootMD can execute c++ code and inject the output (from stdout, stderr) and link or embed image outputs. Provides a format for producing code + result for better documentation / notes. This is by design not a jupyter notebook, e.g. not a REPL-like environment. If you like Jupyter notebooks then use that :). 
 
 ## Features
 - execute c++ code blocks via ROOT REPL
@@ -12,38 +12,114 @@ RootMD is a markdown processor for markdown with ROOT-flavored c++ code. RootMD 
 
 ## usage
 ```sh
-rootmd [-h] [-o OUTPUT] [-f {html,md,obsidian}] [-e] [-a ASSET_DIR] input
+usage: rootmd [-h] [--output OUTPUT]
+              [--format {html,md,obsidian,json,terminal}] [--embed]
+              [--asset-dir ASSET_DIR] [--verbosity VERBOSITY]
+              [--watch WATCH] [--run RUN] [--clean] [--no-exec]
+              input
 
-    input : the markdown file to process
+Convert Markdown with inline c++ code to ROOT output.
 
-    -o : specify output file, default is <input>.<format> (for obsidian format the ext is 'md')
+positional arguments:
+  input                 input Markdown file to execute and convert
 
-    -f : output format
-        - html : output to a single html file
-        - md : output to generic markdown
-        - obsidian : output to markdown, but re-write attachment links to use obsidian style attachment directory
-    
-    -e : embed image assets as base64 in the output file
-
-    -a : specify asset directory to which the output image files are copied
+optional arguments:
+  -h, --help            show this help message and exit
+  --output OUTPUT       output filename default <input>.<ext> where <ext>
+                        is determined by the chosen format, default html
+  --format {html,md,obsidian,json,terminal}
+                        output format
+  --embed               embed images as base 64
+  --asset-dir ASSET_DIR
+                        specify asset output directory, paths are NOTE re-
+                        written to support unless using obsidian format
+  --verbosity VERBOSITY
+                        specify log verbosity
+  --watch WATCH         watch a file or directory for changes
+  --run RUN             command to run after processing a file. The
+                        filename can be substituted into the command string
+                        with {{file}}. Example: --run="echo {{file}}"
+  --clean               clean artifacts, caution - should only use with
+                        embed or asset copy to <asset-dir>
+  --no-exec             Do not execute any code blocks, just process file
+                        (useful for viewing and testing conversion)
 
 ```
 
 
 ## TODO
-- make it a python package (so that it can be installed via pip)
-- add watch functionality for reprocessing a file on change
+- [x] make it a python package (so that it can be installed via pip)
+  - [x] Look into poetry
+  - [x] start versioning
+- [x] support output verbosity levels 
+  - & make output useful
+- Add comment for input block identification upon processing
+- [x] add watch functionality for reprocessing a file on change
+  - [ ] Add some additional features
+  - [ ] Handle watch of multiple files, and how output filename should be named
+- [x] Add terminal output using rich pretty output package
+  - consider iterm image support? [See here](https://iterm2.com/documentation-images.html)
+  - [x] Basically, markdown output on the terminal : using rich
+- [x] Add prismjs for inline code
 - test some failure modes when root code has errors leading to hang
-- add mathjax to html output for inline mathematics
+- [x] add mathjax to html output for inline mathematics
 - "import" source files into output? So that you can write code in separate file but sow it in the output?
 - support for other "languages", e.g. shell
 - support for ROOTJS in HTML output
+  - embed histogram as JSON object in HTML
+- clean assets in embed mode
+- download + embed external JS for fully contained, offline ready single file HTML output
+- Load HTML / CSS defaults from a file in the package
+- [x] Better style HTML output (input / output cells more like Jupyter)
+  - Consider adding JS for collapsing headings, output blocks etc.
+- [ ] add format option to output a ROOT macro with markdown and output converted to comments
+- integrate usage of RNUplot for graphical output!
+
+## Feature wish list
+- Cache blocks of code for faster rerun
+- convert to macro driven, not REPL
+
+
+## Known issues
+- Html renderer isnt putting assets in the correct directory when you run e.g. `rootmd path/to/file.md`
+### ROOT REPL issues
+ROOT REPL struggles with multi-line code:
+- function definitions with "{" on next line does not work since it doesn't understand
+```cpp
+void hello() {
+  // this works
+}
+
+void world() 
+{
+  // this DOES NOT work
+}
+```
+
+
 
 ## Dependencies
 RootMD itself is a pure python package which uses:
-- mistletoe : python markdown parser and processor
-- prismjs for syntax highlighting in HTML output
-- ROOT (installed on system and available on PATH)
+- [mistletoe](https://github.com/miyuchina/mistletoe) : python markdown parser and processor
+- [rich](https://github.com/Textualize/rich) : Rich for pretty terminal output
+- pyyaml : for parsing yaml front matter
+- Dependencies for HTML output
+  - [prismjs](https://prismjs.com/) for syntax highlighting in HTML output
+  - [mathjax](https://www.mathjax.org/) for rendering mathematics
+- [ROOT](https://root.cern.ch/) : installed on system and available on PATH
+
+
+## Changelog
+
+### v0.2.0
+- fix default css
+- setup as package for submission to pypi as `rootmd`
+- add `html`, `css`, and `js` output
+
+### v0.1.0
+- initial release
+- basic functionality with Html and MD renderer + code execution
+
 
 ## Example : see [example_in.md](example_in.md) and [example.md](example.md)
 This is a simple example of markdown processed by RootMD.
