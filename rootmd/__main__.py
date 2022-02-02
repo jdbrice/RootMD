@@ -36,10 +36,10 @@ Entry point for RootMd
 """
 parser = argparse.ArgumentParser(description='Convert Markdown with inline c++ code to ROOT output.', prog="rootmd")
 parser.add_argument(
-    'input', help='input Markdown file to execute and convert'
+    'input', nargs="?", help='input Markdown file to execute and convert', default=""
 )
 parser.add_argument(
-    '--output', help='output filename  default <input>.<ext> where <ext> is determined by the chosen format, default html', default=""
+    '--output', help='output filename  default <input>.<ext> where <ext> is determined by the chosen format, default html, output can include {input} to allow substitution of input filename, or {path} for full path, or {basepath} for path to input file, or {ext} for default output extension for format specified. TODO', default=""
 )
 parser.add_argument( 
     '--format', help='output format', default="html", 
@@ -67,8 +67,18 @@ parser.add_argument(
     '--no-exec', 
     help='Do not execute any code blocks, just process file (useful for viewing and testing conversion)', action='store_true', default=False)
 
+parser.add_argument( 
+    '--html-template', 
+    help='Template HTML file should include {js}, {css}, {content} ... TODO', default="")
+parser.add_argument( 
+    '--css', 
+    help='CSS used for the HTML output, overrides default ... TODO', default="")
+
 args = parser.parse_args()
 
+if "input" not in args and "watch" not in args :
+    log.error( "Must provide one of [\"[input]\" or \"--watch\" to specify input files ]" )
+    exit()
 
 EXTENSIONS = {
     "html"     : ".html",
@@ -99,8 +109,8 @@ if VERBOSITY >= 50 :
 ASSET_PREFIX=""
 EMBED = args.embed
 ASSET_DIR = args.asset_dir
-if args.output == "":
-    args.output = args.input  + EXTENSIONS[args.format]# ext will be added later
+if args.output == "" and args.input != "":
+    args.output = args.input  + EXTENSIONS[args.format] # ext will be added later
 
 # if VERBOSITY <= 1:
 #     inspect( args )
@@ -115,8 +125,12 @@ if args.format == "obsidian":
         log.info( "Making asset directory: %s" % ASSET_DIR )
         os.mkdir( ASSET_DIR )
 
-
-
+#input working dir
+log.info( "I am %s" % __file__ )
+inwdir = os.path.dirname(os.path.abspath(args.input))
+log.info( "input working directory: %s" % inwdir )
+if ASSET_DIR == "" and input != "":
+    ASSET_DIR = inwdir
 
 
 class RootMd :
@@ -141,6 +155,11 @@ class RootMd :
         if not os.path.exists(self.args.input) :
             log.error("File %s does not exist" % ( self.args.input ) )
             return
+        inwdir = os.path.dirname(os.path.abspath(self.args.input))
+        log.info( "input working directory: %s" % inwdir )
+        ASSET_DIR = self.args.asset_dir
+        if ASSET_DIR == "":
+            ASSET_DIR = inwdir
         
         log.info( "Processing %s to %s output format" % (self.args.input, self.args.format ) )
         self.title = args.input
@@ -163,14 +182,15 @@ class RootMd :
             return
 
         output = args.output
-        if "" == output :
-            output = args.input + "." + args.format
+        # if "" == output :
+        #     output = args.input + "." + args.format
+        if output == "":
+            output = input  + EXTENSIONS[args.format] # ext will be added later
 
         log.info( "Writing output to %s" % output )
         with open( output , "w", encoding="utf-8", errors="xmlcharrefreplace") as output_file:
             output_file.write(html)
 
-            
 
 rootmd = RootMd(args)
 
@@ -184,7 +204,7 @@ class Handler(FileSystemEventHandler):
         elif event.event_type == 'modified' :
             # inspect( event )
             # Event is modified, you can process it now
-            log.info("Watchdog received modified event - % s." % event.src_path)
+            log.info("Watchdog received modified event - % s" % event.src_path)
             rootmd.run(input=event.src_path)
 
 

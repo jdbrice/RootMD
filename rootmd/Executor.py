@@ -98,3 +98,29 @@ class GnuPlotExecutor:
                 # log.info( m.groups()[1] )
                 outs.append( m.groups()[1] )
         return outs
+
+class RnuPlotExecutor:
+    def __init__(self) -> None:
+        pass
+
+    def run( self, code ):
+        incode = code.encode('utf-8')
+        with open( "tmp.rnuplot", "w" ) as fw :
+            fw.writelines( code )
+
+        cmd = ['rnuplot', 'tmp.rnuplot' ]
+        result = run( cmd, stdout=PIPE )
+        rich.inspect( result )
+        return result.stdout.decode('utf-8')
+    
+
+    def find_output( self, code ) :
+        outs = []
+        # find the terminal output in the code
+        ms = re.finditer( 'set *output *(\'|")(.*)(\'|")', code )
+        for m in ms :
+            if m:
+                # rich.inspect(m)
+                # log.info( m.groups()[1] )
+                outs.append( m.groups()[1] )
+        return outs

@@ -7,8 +7,8 @@ Scientific reports/literate programming tool for CERN ROOT and c++. RootMD is a 
 - execute c++ code blocks via ROOT REPL
 - capture stdout, stderr and inject into output
 - embed (base64) or link to any image files produced 
-- output to HTML or Markdown (or obsidian flavored markdown)
-- execute html, css, javascript code blocks (for html output) to customize output file
+- output to HTML, Markdown (or obsidian flavored markdown), or as a presentation (via Marp)
+- execute html, css, javascript code blocks (for html output) to customize output
 
 ## usage
 ```sh
@@ -63,25 +63,40 @@ optional arguments:
 - [x] Add prismjs for inline code
 - test some failure modes when root code has errors leading to hang
 - [x] add mathjax to html output for inline mathematics
-- "import" source files into output? So that you can write code in separate file but sow it in the output?
+- [x] "import" source files into output? So that you can write code in separate file but sow it in the output?
+  - add as a block option
 - support for other "languages", e.g. shell
 - support for ROOTJS in HTML output
   - embed histogram as JSON object in HTML
-- clean assets in embed mode
+- [x] clean assets in embed mode or other output path
 - download + embed external JS for fully contained, offline ready single file HTML output
-- Load HTML / CSS defaults from a file in the package
+- [x] Load HTML / CSS defaults from a file in the package
 - [x] Better style HTML output (input / output cells more like Jupyter)
   - Consider adding JS for collapsing headings, output blocks etc.
 - [ ] add format option to output a ROOT macro with markdown and output converted to comments
-- integrate usage of RNUplot for graphical output!
-
+- [x] integrate usage of RNUplot for graphical output!
+- [x] implement an auto-draw so that you dont have to "Print(...)" every block
+- [ ] block option: run code block as a "macro" 
+  - [x] You can already use .L, .x
+- [ ] move ROOT executor into member not superclass
+- [ ] auto-draw dont do it for cells without any drawing!
+- [x] PDF support
+- [ ] Better PDF embed (link to file) (for Firefox especially) using canvas : https://stackoverflow.com/questions/2104608/hiding-the-toolbars-surrounding-an-embedded-pdf
+- [ ] Embed PDF base64 in object tag
 ## Feature wish list
 - Cache blocks of code for faster rerun
-- convert to macro driven, not REPL
+- server for "sharing" of documents, from command line - use secret links
+- Technique for RAW output? 
+  - i.e. write out HTML Table or markup
+- inline code replacement, e.g. "We ran `TString::Format("%d",tree->GetEntries())` events."
 
+## Improve ROOT?
+- Apply some default style options
+- 
 
 ## Known issues
-- Html renderer isnt putting assets in the correct directory when you run e.g. `rootmd path/to/file.md`
+- watch isnt working, especially when input not given
+- something is surely broken
 ### ROOT REPL issues
 ROOT REPL struggles with multi-line code:
 - function definitions with "{" on next line does not work since it doesn't understand
@@ -108,17 +123,6 @@ RootMD itself is a pure python package which uses:
   - [mathjax](https://www.mathjax.org/) for rendering mathematics
 - [ROOT](https://root.cern.ch/) : installed on system and available on PATH
 
-
-## Changelog
-
-### v0.2.0
-- fix default css
-- setup as package for submission to pypi as `rootmd`
-- add `html`, `css`, and `js` output
-
-### v0.1.0
-- initial release
-- basic functionality with Html and MD renderer + code execution
 
 
 ## Example : see [example_in.md](example_in.md) and [example.md](example.md)

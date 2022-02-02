@@ -139,11 +139,16 @@ class CodeFence(BlockToken):
     pattern = re.compile(r'( {0,3})(`{3,}|~{3,}) *(\S*)')
     _open_info = None
     _options = {}
-    def __init__(self, match):
-        lines, open_info, options = match
-        self.language = span_token.EscapeSequence.strip(open_info[2])
-        self.children = (span_token.RawText(''.join(lines)),)
-        self.options = options
+    def __init__(self, match=None):
+        if match == None:
+            self.language = ""
+            self.children = []
+            self.options = {}
+        else:
+            lines, open_info, options = match
+            self.language = span_token.EscapeSequence.strip(open_info[2])
+            self.children = (span_token.RawText(''.join(lines)),)
+            self.options = options
 
     @classmethod
     def start(cls, line):
@@ -159,12 +164,14 @@ class CodeFence(BlockToken):
     @classmethod
     def read(cls, lines):
         ls = lines.lines[ lines._index+1]
-        # log.info( ls )
+        # log.info( ls.split()[0] )
         cls._options = {}
-        for l in ls.split() :
+        for l in ls.split()[1:] :
             m = re.match( "(.*):(.*)", l )
             if not m:
+                cls._options[ l ] = True
                 continue
+
             cls._options[ m.groups()[0] ] = m.groups()[1]
         next(lines)
         line_buffer = []
