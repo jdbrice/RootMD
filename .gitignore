@@ -12,3 +12,15 @@ h2.svg
 RootRenderer.py
 mytty.py
 root.py
+.svg
+*.svg
+*.dat
+dist
+*.pyc
+examples
+*.pdf
+*.s
+*.ps
+*.gnuplot
+*.rnuplot
+*.DS_Store

@@ -1,6 +1,7 @@
 #!/usr/bin/env conda run -n py38 python
 
-import html
+import json
+import requests
 import os
 from xmlrpc.client import boolean
 import mistletoe as md
@@ -74,6 +75,10 @@ parser.add_argument(
     '--css', 
     help='CSS used for the HTML output, overrides default ... TODO', default="")
 
+parser.add_argument( 
+    '--share', 
+    help='Upload to sharing server', default=False, action='store_true')
+
 args = parser.parse_args()
 
 if "input" not in args and "watch" not in args :
@@ -142,6 +147,7 @@ class RootMd :
         self.title = ""
         self.last_run_input = ""
         self.last_run_time = 0
+        
 
     def run(self, input):
         delta_time = time.time() - self.last_run_time
@@ -150,7 +156,7 @@ class RootMd :
         if self.args.input == self.last_run_input and delta_time < 4 :
             return
         self.last_run_input = self.args.input
-        self.last_run_time = time.time()
+        artifacts = []
         
         if not os.path.exists(self.args.input) :
             log.error("File %s does not exist" % ( self.args.input ) )
@@ -176,7 +182,7 @@ class RootMd :
 
         with open( args.input , 'r') as fin:
             html = theRenderer.render(md.Document(fin))
-
+            artifacts = theRenderer.artifacts
         if args.format == "terminal" :
             console.print( Markdown(html) )
             return
@@ -190,6 +196,32 @@ class RootMd :
         log.info( "Writing output to %s" % output )
         with open( output , "w", encoding="utf-8", errors="xmlcharrefreplace") as output_file:
             output_file.write(html)
+        
+
+        token = os.environ.get( "ROOTMD_TOKEN", "d07761d8f74207917c61dd05627dab6d" )
+        if "share" in args and args.share and token != "":
+            files = { output : html }
+            for fn in artifacts:
+                try :
+                    with open( fn, 'rb' ) as f:
+                        files[ fn ] = f.read()
+                except Exception as e:
+                    log.error( e )
+
+            log.info( "SHARE:" )
+            for fi in files :
+                log.info( "file_name: %s" % fi )
+            res = requests.post(
+                "https://rootmd.jdbburg.com/upload",
+                data={ "token": token},
+                files = files )
+            log.info( res.json() )
+            if res.status_code == 200 and res.json()["status"] == True and len(res.json()["data"]) >= 1:
+                url = res.json()["data"][0]["link"]
+                # "https://rootmd.jdbburg.com/bfbf11835023423dd316586acb9fbbb3/confidenceintervals.md.html"
+                log.info( "Uploaded to: %s" % url )
+        
+        self.last_run_time = time.time()
 
 
 rootmd = RootMd(args)
@@ -225,3 +257,5 @@ if args.watch :
 
 
 rootmd.run(args.input)
+
+

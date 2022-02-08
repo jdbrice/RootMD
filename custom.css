@@ -1,0 +1,28 @@
+/* svg {
+    height: 100%!important;
+    width: 100%!important;
+} */
+
+#root-output-1 {
+    height: 15em;
+    overflow-y:scroll;
+}
+
+
+div.output-images svg {
+    width:100%!important;
+    height:100%!important;
+}
+
+.highlight pre {
+    overflow-x:auto!important;
+    line-height: 1.4em!important;
+
+}
+
+
+figure {
+    text-align: center;
+    display: inline-block;
+    width: 49%;
+}

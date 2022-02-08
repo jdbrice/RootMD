@@ -1,6 +1,6 @@
 
 ## v0.5.4
-
+- include "template.html" in package data 
 
 ## v0.5.3
 - line numbers

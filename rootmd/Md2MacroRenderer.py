@@ -1,7 +1,7 @@
 from mistletoe.base_renderer import BaseRenderer
 
 
-
+import hashlib
 import rich
 import logging
 from rich.logging import RichHandler
@@ -32,15 +32,22 @@ class Md2MacroRenderer(BaseRenderer):
             self.asset_prefix = kwargs.get( "asset_prefix" )
 
     def render_block_code(self, token):
-        template = '// %% ----------ROOTMD_START_BLOCK{id}----------\n{content}\n// %% ----------ROOTMD_END_BLOCK{id}----------\n'
+        # template = '// %% ----------ROOTMD_START_BLOCK{id}----------\n{content}\n// %% ----------ROOTMD_END_BLOCK{id}----------\n'
 
         code =token.children[0].content
-        output = template.format( id = self.blockid, content=token.children[0].content )
+        # output = template.format( id = self.blockid, content=token.children[0].content )
+        hash = hashlib.md5( token.children[0].content.encode() )
+        output = "// %%>{id} ----------ROOTMD_START_BLOCK{hash}----------\n".format( id = self.blockid, hash = hash.hexdigest() )
+        for l in token.children[0].content.splitlines():
+            output += "    " + l + "\n"
+        output += "// %%<{id} ----------ROOTMD_START_BLOCK{hash}----------\n".format( id = self.blockid, hash = hash.hexdigest() )
+
 
         self.blockid += 1
         return output
 
-        
+    def render_inline_code(self, token):
+        return "`" + self.render_raw_text(token) + "`"
 
         
     
@@ -60,7 +67,10 @@ class Md2MacroRenderer(BaseRenderer):
         Default render method for RawText. Simply return token.content.
         """
         if hasattr(token, 'content'):
-            return "//" + token.content
+            output = ""
+            for l in token.content.splitlines():
+                output += "//" + l + "\n"
+            return output
         return self.render_inner( token )
     def render_to_plain(self, token):
         log.info( "render_to_plain" )
@@ -81,7 +91,7 @@ class Md2MacroRenderer(BaseRenderer):
         parts = []
         for child in token.children :
             log.info( child.__class__.__name__ )
-            if "CodeFence" == child.__class__.__name__:
+            if "CodeFence" == child.__class__.__name__ or "InlineCode" == child.__class__.__name__:
                 parts.append( self.render( child ) )
             else:
                 parts.append( self.render_raw_text( child ) )

@@ -41,11 +41,6 @@ pre {
     font-family: 'Fira Code'
 }
 """
-
-codetemplate = '<pre class="languag-{lang}"><code class="language-{lang}">{inner}</code></pre>'
-divtemplate = '<div class="output" >' + codetemplate + '</div>'
-# imgtemplate = '<img src="{src}" class="{ext}  {ucls}"/>'
-
 autocanvast = ''
 autodrawt = 'if (gPad) { gPad->Print("auto.svg"); }\n'
 
@@ -62,6 +57,7 @@ class RootHtmlRenderer(HTMLRenderer, RootExecutor):
         self.asset_dir = ""
         self.clean = False
         self.no_exec = False
+        self.artifacts = []
 
         # document meta
         self.title = ""
@@ -98,12 +94,14 @@ class RootHtmlRenderer(HTMLRenderer, RootExecutor):
         ext = ext.replace( ".", "" )
 
         if self.asset_dir != "" and not self.embed:
-            print( "cp %s %s" % (path, self.asset_dir) )
+            # print( "cp %s %s" % (path, self.asset_dir) )
             try :
                 move( path, os.path.join( self.asset_dir, path) )
+                self.artifacts.append( os.path.join( self.asset_dir, path ) )
+                log.info( "Artifact: %s" % os.path.join( self.asset_dir, path ) )
             except Exception as e:
                 log.error( 'Tried move( "%s", "%s" ) ' % (path, self.asset_dir) )
-                log.error( e )
+                log.error( e )  
 
         template = '<img src="data:image/{ext};charset=utf-8;base64,{data}" class="{cls} {ucls}"/>'
         # cml line flag, block option, or YAML
@@ -336,6 +334,7 @@ class RootHtmlRenderer(HTMLRenderer, RootExecutor):
             with open( stderr_filename, "w" ) as wf:
                 wf.writelines( err.split() )
         
+        log.info( output )
         log.error( err )
 
         # log.info( "silent? %r" % ('silent' in token.options) )
@@ -350,6 +349,8 @@ class RootHtmlRenderer(HTMLRenderer, RootExecutor):
         if self.optionAsBool( token.options, 'img', self.optionAsBool( token.options, 'image', True ) ) == False:
             imgs = []
 
+        codetemplate = '<pre class="languag-{lang}"><code class="language-{lang}">{inner}</code></pre>'
+        divtemplate = '<div class="output" >' + codetemplate + '</div>'
         # inject stdout
         divout = '<div id="{id}" class="root-output output-block">'.format( id="root-output-%d" % (self.blockid) )
         if len( output ):
