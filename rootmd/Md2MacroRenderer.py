@@ -5,6 +5,7 @@ import hashlib
 import rich
 import logging
 from rich.logging import RichHandler
+from .YamlBlock import YamlFence, CodeFence
 FORMAT = "%(message)s"
 logging.basicConfig(
     level="NOTSET", format=FORMAT, datefmt="[%X]", handlers=[RichHandler()]
@@ -15,12 +16,13 @@ log = logging.getLogger("rich")
 
 class Md2MacroRenderer(BaseRenderer):
     def __init__(self, *extras):
-        super().__init__(*extras)
+        super().__init__(YamlFence, CodeFence, *extras)
         
         self.blockid = 0
         self.embed = False
         self.asset_prefix = ""
         self.asset_dir = ""
+        self.artifacts = []
         
     
     def set( self, **kwargs ) :
@@ -31,16 +33,54 @@ class Md2MacroRenderer(BaseRenderer):
         if "asset_prefix" in kwargs:
             self.asset_prefix = kwargs.get( "asset_prefix" )
 
-    def render_block_code(self, token):
-        # template = '// %% ----------ROOTMD_START_BLOCK{id}----------\n{content}\n// %% ----------ROOTMD_END_BLOCK{id}----------\n'
 
-        code =token.children[0].content
-        # output = template.format( id = self.blockid, content=token.children[0].content )
+    # SHOULD CENTRALIZE WITH OTHER RENDERERS
+    def optionAsBool( self, options, n, default = False ):
+        
+        # option is false by default
+        if n not in options :
+            log.info( "A" )
+            return default
+        if type( options[n] ) == bool:
+            log.info( "B" )
+            return options[n]
+        log.info( "C" )
+        return not (options.get( n, "" ).lower() == 'false' or options.get( n, "" ) == '0')
+
+    """
+    Code Fence is a custom Code Block token that accepts optional arguments after the language id
+    example:
+    ```cpp in:0
+    ...
+    ```
+
+    the above turns off echoing the input to rendered document
+    """
+    def render_code_fence( self, token ):
+        log.info( "render_code_fence" )
+        # rich.inspect( token )
+        return self.render_block_code( token )
+
+    def render_block_code(self, token):
+
+        log.info( "options:" )
+        log.info( token.options )
+        if token.language != "cpp" and token.options.get( "exec", "" ) != "cpp":
+            return self.render_raw_text( token )
+
+        log.info( "exec : %s" % ( self.optionAsBool( token.options, "exec", True ) ) )
+        if self.optionAsBool( token.options, "exec", True ) == False:
+            return ""
+            # return self.render_raw_text( token )
+        # code =token.children[0].content
+        
         hash = hashlib.md5( token.children[0].content.encode() )
         output = "// %%>{id} ----------ROOTMD_START_BLOCK{hash}----------\n".format( id = self.blockid, hash = hash.hexdigest() )
+        output += 'printf( "START_BLOCK%%>{id}<%%{hash} {{\\n" );\n'.format( id = self.blockid, hash = hash.hexdigest() )
         for l in token.children[0].content.splitlines():
             output += "    " + l + "\n"
-        output += "// %%<{id} ----------ROOTMD_START_BLOCK{hash}----------\n".format( id = self.blockid, hash = hash.hexdigest() )
+        output += 'printf( "END_BLOCK%%<{id}>%%{hash} }}\\n" );\n'.format( id = self.blockid, hash = hash.hexdigest() )
+        output += "// %%<{id} ----------ROOTMD_END_BLOCK{hash}----------\n".format( id = self.blockid, hash = hash.hexdigest() )
 
 
         self.blockid += 1
@@ -95,6 +135,6 @@ class Md2MacroRenderer(BaseRenderer):
                 parts.append( self.render( child ) )
             else:
                 parts.append( self.render_raw_text( child ) )
-            rich.inspect( child )
+            # rich.inspect( child )
         inner = '\n'.join( parts )
         return inner

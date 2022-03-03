@@ -153,7 +153,7 @@ class RootMd :
         delta_time = time.time() - self.last_run_time
         self.args.input = input
         # log.info( "delta_time = %d" % delta_time )
-        if self.args.input == self.last_run_input and delta_time < 4 :
+        if self.args.input == self.last_run_input and delta_time < 1 :
             return
         self.last_run_input = self.args.input
         artifacts = []
@@ -198,7 +198,7 @@ class RootMd :
             output_file.write(html)
         
 
-        token = os.environ.get( "ROOTMD_TOKEN", "d07761d8f74207917c61dd05627dab6d" )
+        token = os.environ.get( "ROOTMD_TOKEN", "" )
         if "share" in args and args.share and token != "":
             files = { output : html }
             for fn in artifacts:
@@ -219,7 +219,8 @@ class RootMd :
             if res.status_code == 200 and res.json()["status"] == True and len(res.json()["data"]) >= 1:
                 url = res.json()["data"][0]["link"]
                 # "https://rootmd.jdbburg.com/bfbf11835023423dd316586acb9fbbb3/confidenceintervals.md.html"
-                log.info( "Uploaded to: %s" % url )
+                log.info( "Uploaded to:" )
+                print( url )
         
         self.last_run_time = time.time()
 

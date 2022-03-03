@@ -298,6 +298,9 @@ class RootHtmlRenderer(HTMLRenderer, RootExecutor):
             code_block =  super().render_block_code(token)
         code = token.children[0].content
         
+
+        if self.optionAsBool( token.options,'in', True) == False or self.optionAsBool( token.options,'hide', False) == True or self.optionAsBool( token.options,'echo', True) == False:
+            code_block = ""
         # log.info( "exec: %r" % self.optionAsBool( token.options, "exec", True ) )
         # log.info ("no-exec: %r" % self.no_exec)
         if self.optionAsBool( token.options, "exec", True ) == False or self.no_exec:
@@ -342,8 +345,7 @@ class RootHtmlRenderer(HTMLRenderer, RootExecutor):
             output = ""
             err = ""
 
-        if self.optionAsBool( token.options,'in', True) == False:
-            code_block = ""
+        
         
         img_class = token.options.get( ".image", "" )
         if self.optionAsBool( token.options, 'img', self.optionAsBool( token.options, 'image', True ) ) == False:
