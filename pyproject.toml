@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "rootmd"
-version = "0.5.4"
+version = "0.5.5"
 description = "RootMD is a markdown processor for markdown with ROOT-flavored c++ code. RootMD can execute c++ code and inject the output (from stdout, stderr) and link or embed image outputs"
 authors = ["Daniel Brandenburg <hello@jdbburg.com>"]
 include = ["rootmd/data"]
